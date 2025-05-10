@@ -223,7 +223,6 @@
             margin-bottom: 1rem;
         }
         
-        /* Budget slider improvements */
         .budget-section {
             margin: 2rem 0;
         }
@@ -266,7 +265,6 @@
             color: var(--primary);
         }
         
-        /* Checkbox improvements */
         .checkbox-group {
             display: flex;
             flex-direction: column;
@@ -294,7 +292,6 @@
             cursor: pointer;
         }
         
-        /* Warning box improvements */
         .limitations-warning {
             background-color: #fffbeb;
             border: 1px solid #f59e0b;
@@ -311,7 +308,6 @@
             flex-shrink: 0;
         }
         
-        /* Confirmation improvements */
         .confirmation-details {
             padding: 2rem;
             background: #f8f9fa;
@@ -329,7 +325,7 @@
         
         .timeline {
             margin: 2.5rem 0;
-            padding-left: c;
+            padding-left: 1rem;
             border-left: 2px dashed var(--primary);
         }
         
@@ -357,7 +353,6 @@
             margin-top: 2.5rem;
         }
         
-        /* Summary improvements */
         .summary-item {
             display: flex;
             align-items: center;
@@ -385,28 +380,46 @@
             color: #64748b;
         }
 
-   .ai-response {
-        background: #f8f9fa;
-        padding: 2rem;
-        border-radius: 1rem;
-        margin-top: 1.5rem;
-    }
-    
-    .loading {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 1rem;
-    }
-    
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-
-
-
+        .ai-response {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .ai-response h2 {
+            color: var(--primary);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.25rem;
+        }
+        
+        .ai-response h3 {
+            color: var(--secondary);
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .ai-response ul {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .ai-response li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -575,12 +588,13 @@
                 <h2><i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem;"></i> Confirm Your Choices</h2>
                 <div id="summaryContent"></div>
             </div>
-        </div>
 
-<div class="step" id="stepAI">
-    <h2><i data-lucide="sparkles"></i> AI Travel Plan</h2>
-    <div id="aiResponse" class="ai-response"></div>
-</div>
+            <!-- Step 10: AI Travel Plan -->
+            <div class="step" id="stepAI">
+                <h2><i data-lucide="sparkles" style="width: 1.25rem; height: 1.25rem;"></i> AI Travel Plan</h2>
+                <div id="aiResponse" class="ai-response"></div>
+            </div>
+        </div>
 
         <div class="nav-buttons">
             <button class="btn btn-secondary" id="btnBack">
@@ -627,7 +641,7 @@
         lucide.createIcons();
         
         let currentStep = 1;
-        const totalSteps = 9;
+        const totalSteps = 10;
         const preferences = {
             dates: { start: null, end: null },
             duration: null,
@@ -798,7 +812,7 @@
 
             const dataset = this.dataset;
             if (dataset.region) preferences.region = dataset.region;
-if (dataset.travelers) preferences.travelers = dataset.travelers;
+            if (dataset.travelers) preferences.travelers = dataset.travelers;
             if (dataset.dining) preferences.dining = dataset.dining;
         }
         
@@ -830,8 +844,10 @@ if (dataset.travelers) preferences.travelers = dataset.travelers;
                     
                     if (currentStep === 8) {
                         showConfirmation();
-                    } else if (currentStep === totalSteps) {
+                    } else if (currentStep === 9) {
                         showSummary();
+                    } else if (currentStep === 10) {
+                        generateAIPlan();
                     }
                 }
             }
@@ -898,7 +914,7 @@ if (dataset.travelers) preferences.travelers = dataset.travelers;
             if (currentStep === totalSteps) {
                 document.getElementById('btnNext').innerHTML = `
                     <i data-lucide="check-circle"></i>
-                    Confirm & Book
+                    Finish
                 `;
                 lucide.createIcons();
             } else {
@@ -1026,7 +1042,7 @@ if (dataset.travelers) preferences.travelers = dataset.travelers;
             lucide.createIcons();
         }
 
- async function generateAIPlan() {
+        async function generateAIPlan() {
             const aiResponse = document.getElementById('aiResponse');
             aiResponse.innerHTML = `
                 <div class="loading">
@@ -1038,40 +1054,56 @@ if (dataset.travelers) preferences.travelers = dataset.travelers;
 
             try {
                 const prompt = `Create a detailed travel plan for Bahraini citizen with:
-                    Destination: ${preferences.region}
+                    Destination: ${CONFIG.REGIONS[preferences.region]?.label || preferences.region}
                     Dates: ${preferences.dates.start} to ${preferences.dates.end}
+                    Duration: ${preferences.duration} days
                     Budget: ${preferences.budget} BHD
-                    Travel style: ${preferences.travelStyles.join(', ')}
-                    Travelers: ${preferences.travelers}
-                    Dining: ${preferences.dining}
-                    Special requirements: ${preferences.limitations.join(', ')}
+                    Travel style: ${preferences.travelStyles.map(style => 
+                        CONFIG.TRAVEL_TYPES.find(t => t.id === style)?.label || style).join(', ')}
+                    Travelers: ${CONFIG.TRAVELER_TYPES.find(t => t.id === preferences.travelers)?.label || preferences.travelers}
+                    Dining: ${CONFIG.DINING_OPTIONS.find(d => d.id === preferences.dining)?.label || preferences.dining}
+                    Special requirements: ${preferences.limitations.join(', ') || 'None'}
                     
-                    Include in Arabic and English:
+                    Provide the response in both Arabic and English with:
                     1. Visa requirements
                     2. Flight options from Bahrain
-                    3. Hotel and staying recommendations
+                    3. Hotel recommendations
                     4. Cultural tips
                     5. Budget breakdown
                     6. Emergency contacts
-                    7. where they can buy tickets based on date
-
+                    7. Ticket purchasing information
                     
                     Format with clear headings and bullet points.`;
 
-                const response = await fetch('http://localhost:3001/generate-plan', {
+                const response = await fetch('/generate-plan', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ prompt })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                aiResponse.innerHTML = formatPlan(data.choices[0].message.content);
+                
+                // Handle the OpenAI response format
+                const content = data.choices?.[0]?.message?.content || 
+                               data.error?.message || 
+                               "Received unexpected response format from server";
+                
+                aiResponse.innerHTML = formatPlan(content);
                 
             } catch (error) {
+                console.error('Error generating plan:', error);
                 aiResponse.innerHTML = `
-                    <div style="color: var(--error)">
+                    <div style="color: var(--error); display: flex; align-items: center; gap: 0.5rem;">
                         <i data-lucide="alert-triangle"></i>
-                        Error generating plan: ${error.message}
+                        <div>
+                            <strong>Error generating travel plan</strong>
+                            <p>${error.message}</p>
+                            <p>Please try again later or check your connection.</p>
+                        </div>
                     </div>
                 `;
             }
@@ -1079,35 +1111,22 @@ if (dataset.travelers) preferences.travelers = dataset.travelers;
         }
 
         function formatPlan(text) {
-            return text
-                .replace(/#{3}/g, '</h3>')
-                .replace(/#{2}/g, '</h2>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
+            // Convert markdown-like formatting to HTML
+            let html = text
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')  // ### Heading → <h3>
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')    // ## Heading → <h2>
+                .replace(/^\* (.*$)/gm, '<li>$1</li>')    // * Item → <li>
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** → <strong>
+                .replace(/\n/g, '<br>');                  // Newlines → <br>
+            
+            // Wrap lists in <ul> tags
+            html = html.replace(/(<li>.*?<\/li>)+/g, function(match) {
+                return `<ul>${match}</ul>`;
+            });
+            
+            // Add some styling
+            return `<div style="line-height: 1.6;">${html}</div>`;
         }
-
-        // Modify nextStep function
-        function nextStep() {
-            if (validateCurrentStep()) {
-                if (currentStep < totalSteps) {
-                    steps[currentStep - 1].classList.remove('active');
-                    currentStep++;
-                    steps[currentStep - 1].classList.add('active');
-                    updateProgress();
-                    
-                    if (currentStep === 8) {
-                        showConfirmation();
-                    } else if (currentStep === totalSteps) {
-                        showSummary();
-                        generateAIPlan();  
-                    }
-                }
-            }
-        }
-
-        // Change totalSteps to 10
-        const totalSteps = 10;
-
 
         init();
     </script>
