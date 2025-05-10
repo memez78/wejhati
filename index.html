@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wejhati - Travel Planner</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #a78bfa;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 1.5rem auto;
+            padding: 1rem;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 1.25rem;
+            padding: 2.5rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #c4b5fd;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .step {
+            display: none;
+            padding: 2rem;
+            background: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .step h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .option-card {
+            padding: 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .option-card.active {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+        
+        .option-card.active::before {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .option-card.multi-select {
+            padding: 1.25rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .date-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .date-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .date-input label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .date-input input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .date-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .date-duration-display {
+            text-align: center;
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .duration-error {
+            color: var(--error);
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .option-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Budget slider improvements */
+        .budget-section {
+            margin: 2rem 0;
+        }
+        
+        .budget-slider {
+            width: 100%;
+            margin: 2rem 0;
+        }
+        
+        .budget-slider input[type="range"] {
+            width: 100%;
+            height: 8px;
+            appearance: none;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .budget-slider input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .budget-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+        
+        .budget-display {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            color: var(--primary);
+        }
+        
+        /* Checkbox improvements */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        /* Warning box improvements */
+        .limitations-warning {
+            background-color: #fffbeb;
+            border: 1px solid #f59e0b;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .limitations-warning i {
+            color: #f59e0b;
+            flex-shrink: 0;
+        }
+        
+        /* Confirmation improvements */
+        .confirmation-details {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 1rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        
+        .confirmation-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline {
+            margin: 2.5rem 0;
+            padding-left: c;
+            border-left: 2px dashed var(--primary);
+        }
+        
+        .timeline-item {
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding-left: 1rem;
+        }
+        
+        .timeline-item i {
+            color: var(--primary);
+            background: white;
+            border-radius: 50%;
+            padding: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-left: -1.5rem;
+        }
+        
+        .reveal-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 2.5rem;
+        }
+        
+        /* Summary improvements */
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+        }
+        
+        .summary-item .emoji {
+            font-size: 1.5rem;
+        }
+        
+        .summary-detail {
+            flex: 1;
+        }
+        
+        .summary-detail h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .summary-detail p {
+            color: #64748b;
+        }
+
+   .ai-response {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .loading {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h1 style="font-size: 2.25rem; font-weight: bold;">وجهتي Wejhati</h1>
+                    <p style="opacity: 0.9; font-size: 1.125rem;">Your Next Adventure Awaits</p>
+                    <p style="opacity: 0.75; font-size: 0.875rem; margin-top: 0.5rem;">Let us surprise you with the perfect getaway</p>
+                </div>
+                <i data-lucide="plane" style="width: 3.5rem; height: 3.5rem; opacity: 0.8;"></i>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div id="stepsContainer">
+            <!-- Step 1: Date Selection -->
+            <div class="step active" id="step1">
+                <h2><i data-lucide="calendar" style="width: 1.25rem; height: 1.25rem;"></i> Select Travel Dates</h2>
+                <div class="date-section">
+                    <div class="date-input">
+                        <label><i data-lucide="plane-takeoff" style="width: 1rem; height: 1rem;"></i> Start Date</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="date-input">
+                        <label><i data-lucide="plane-landing" style="width: 1rem; height: 1rem;"></i> End Date</label>
+                        <input type="date" id="endDate" required>
+                    </div>
+                </div>
+                <div class="date-duration-display" id="durationDisplay">Select dates to see trip duration</div>
+                <div class="duration-error" id="durationError">Trip duration cannot exceed 365 days</div>
+            </div>
+
+            <!-- Step 2: Region Selection -->
+            <div class="step" id="step2">
+                <h2><i data-lucide="globe" style="width: 1.25rem; height: 1.25rem;"></i> Select Destination Region</h2>
+                <div class="options-grid" id="regionOptions"></div>
+            </div>
+
+            <!-- Step 3: Travel Type -->
+            <div class="step" id="step3">
+                <h2><i data-lucide="compass" style="width: 1.25rem; height: 1.25rem;"></i> Select Travel Style</h2>
+                <p>You can select multiple options that interest you.</p>
+                <div class="options-grid" id="travelTypeOptions"></div>
+            </div>
+
+            <!-- Step 4: Travel Group -->
+            <div class="step" id="step4">
+                <h2><i data-lucide="users" style="width: 1.25rem; height: 1.25rem;"></i> Who's Joining?</h2>
+                <div class="options-grid" id="travelerTypeOptions"></div>
+            </div>
+
+            <!-- Step 5: Dining Preferences -->
+            <div class="step" id="step5">
+                <h2><i data-lucide="utensils" style="width: 1.25rem; height: 1.25rem;"></i> Dining Preferences</h2>
+                <div class="options-grid" id="diningOptions"></div>
+            </div>
+
+            <!-- Step 6: Special Requirements -->
+            <div class="step" id="step6">
+                <h2><i data-lucide="check-square" style="width: 1.25rem; height: 1.25rem;"></i> Special Requirements</h2>
+                <p>Select any special requirements for your trip:</p>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="limitations" value="no-flights">
+                        <div>
+                            <strong>✈️ No flights</strong>
+                            <p>Travel by land or sea transportation only</p>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="limitations" value="wheelchair">
+                        <div>
+                            <strong>♿ Wheelchair accessible</strong>
+                            <p>Destinations and activities with accessibility options</p>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="limitations" value="vegan">
+                        <div>
+                            <strong>🥗 Vegan-friendly</strong>
+                            <p>Destinations with good vegan dining options</p>
+                        </div>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="limitations" value="english">
+                        <div>
+                            <strong>🗣️ English-speaking guides</strong>
+                            <p>Tours and experiences with English-speaking staff</p>
+                        </div>
+                    </label>
+                </div>
+                <div class="limitations-warning">
+                    <i data-lucide="alert-triangle" style="width: 1.5rem; height: 1.5rem;"></i>
+                    <div>
+                        <strong>For your safety:</strong> We never suggest destinations with travel warnings, 
+                        active conflicts, or serious health risks.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Budget Planning -->
+            <div class="step" id="step7">
+                <h2><i data-lucide="wallet" style="width: 1.25rem; height: 1.25rem;"></i> Budget Planning</h2>
+                
+                <div class="budget-display">
+                    <span id="budgetValue">1,000 BHD</span>
+                </div>
+                
+                <div class="budget-slider">
+                    <input type="range" id="budgetSlider" min="400" max="10000" step="100" value="1000">
+                    <div class="budget-slider-labels">
+                        <span>400 BHD</span>
+                        <span>10,000+ BHD</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; text-align: center; color: #64748b;">
+                    <p>Drag the slider to set your total travel budget</p>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">
+                        This helps us tailor accommodations, activities, and transportation options
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 8: Confirmation -->
+            <div class="step" id="step8">
+                <h2><i data-lucide="package" style="width: 1.25rem; height: 1.25rem;"></i> Your Surprise Trip is Being Planned!</h2>
+                <div class="confirmation-details">
+                    <div class="confirmation-item">
+                        <i data-lucide="lock" style="width: 1.5rem; height: 1.5rem; color: #10b981;"></i>
+                        <h3>Destination locked securely</h3>
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <i data-lucide="package"></i>
+                            <p><strong>Packing guide</strong> will arrive in 48 hours</p>
+                        </div>
+                        <div class="timeline-item">
+                            <i data-lucide="calendar"></i>
+                            <p><strong>Daily hints</strong> start 5 days before departure</p>
+                        </div>
+                        <div class="timeline-item">
+                            <i data-lucide="map-pin"></i>
+                            <p><strong>Full reveal</strong> on <span id="revealDate" style="font-weight: bold;"></span></p>
+                        </div>
+                    </div>
+                    <div class="reveal-buttons">
+                        <button class="btn btn-secondary" id="revealNow">
+                            <i data-lucide="eye" style="width: 1rem; height: 1rem;"></i>
+                            Reveal Surprise Now
+                        </button>
+                        <button class="btn btn-primary" id="keepSurprise">
+                            <i data-lucide="gift" style="width: 1rem; height: 1rem;"></i>
+                            Keep the Mystery!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9: Summary -->
+            <div class="step" id="step9">
+                <h2><i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem;"></i> Confirm Your Choices</h2>
+                <div id="summaryContent"></div>
+            </div>
+        </div>
+
+<div class="step" id="stepAI">
+    <h2><i data-lucide="sparkles"></i> AI Travel Plan</h2>
+    <div id="aiResponse" class="ai-response"></div>
+</div>
+
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="btnBack">
+                <i data-lucide="chevron-left"></i>
+                Back
+            </button>
+            <button class="btn btn-primary" id="btnNext">
+                Continue
+                <i data-lucide="chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            REGIONS: {
+                europe: { icon: '🌍', label: 'Europe', countries: 27 },
+                middle_east: { icon: '🕌', label: 'Middle East', countries: 12 },
+                asia: { icon: '🗾', label: 'Asia', countries: 18 },
+                americas: { icon: '🌎', label: 'Americas', countries: 15 }
+            },
+            TRAVEL_TYPES: [
+                { id: 'cultural', icon: '🏛️', label: 'Cultural', desc: 'Historical sites & museums' },
+                { id: 'adventure', icon: '🏔️', label: 'Adventure', desc: 'Outdoor activities' },
+                { id: 'luxury', icon: '💎', label: 'Luxury', desc: 'Premium experiences' },
+                { id: 'culinary', icon: '🍴', label: 'Culinary', desc: 'Food-focused travel' },
+                { id: 'spiritual', icon: '🧘', label: 'Spiritual', desc: 'Religious & wellness' },
+                { id: 'relaxation', icon: '🏖️', label: 'Beach & Relaxation', desc: 'Resorts, spas, coastal destinations' },
+                { id: 'shopping', icon: '🛍️', label: 'Shopping', desc: 'Designer outlets, markets' }
+            ],
+            TRAVELER_TYPES: [
+                { id: 'solo', icon: '🧳', label: 'Solo Travel', desc: 'Personalized experiences for individual explorers' },
+                { id: 'couple', icon: '👫', label: 'Romantic Getaway', desc: 'Private experiences for couples' },
+                { id: 'family', icon: '👨‍👩‍👧‍👦', label: 'Family Trip', desc: 'Kid-friendly activities and amenities' },
+                { id: 'group', icon: '👥', label: 'Group Travel', desc: 'Social experiences for friends or teams' }
+            ],
+            DINING_OPTIONS: [
+                { id: 'halal', icon: '🍽️', label: 'Strict Halal', desc: 'Only certified halal establishments' },
+                { id: 'vegetarian', icon: '🥗', label: 'Vegetarian', desc: 'Focus on plant-based options' },
+                { id: 'flexible', icon: '🍳', label: 'Flexible', desc: 'Open to various dining experiences' }
+            ]
+        };
+
+        lucide.createIcons();
+        
+        let currentStep = 1;
+        const totalSteps = 9;
+        const preferences = {
+            dates: { start: null, end: null },
+            duration: null,
+            region: null,
+            travelStyles: [],
+            travelers: null,
+            dining: null,
+            budget: 1000,
+            limitations: []
+        };
+
+        const steps = document.querySelectorAll('.step');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const durationDisplay = document.getElementById('durationDisplay');
+        const durationError = document.getElementById('durationError');
+
+        function init() {
+            populateOptions();
+            setupEventListeners();
+            updateProgress();
+            
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            startDate.min = tomorrow.toISOString().split('T')[0];
+            
+            // Initialize budget formatter
+            const budgetFormatter = new Intl.NumberFormat('en-US');
+            document.getElementById('budgetValue').textContent = budgetFormatter.format(1000) + ' BHD';
+        }
+
+        function populateOptions() {
+            // Regions
+            document.getElementById('regionOptions').innerHTML = Object.entries(CONFIG.REGIONS).map(([key, region]) => `
+                <div class="option-card" data-region="${key}">
+                    <div class="option-icon">${region.icon}</div>
+                    <h3>${region.label}</h3>
+                    <p>${region.countries}+ countries</p>
+                </div>
+            `).join('');
+
+            // Travel Types - Modified for multi-select
+            document.getElementById('travelTypeOptions').innerHTML = CONFIG.TRAVEL_TYPES.map(type => `
+                <div class="option-card multi-select" data-type="${type.id}">
+                    <div class="option-icon">${type.icon}</div>
+                    <h3>${type.label}</h3>
+                    <p>${type.desc}</p>
+                </div>
+            `).join('');
+
+            // Traveler Types
+            document.getElementById('travelerTypeOptions').innerHTML = CONFIG.TRAVELER_TYPES.map(type => `
+                <div class="option-card" data-travelers="${type.id}">
+                    <div class="option-icon">${type.icon}</div>
+                    <h3>${type.label}</h3>
+                    <p>${type.desc}</p>
+                </div>
+            `).join('');
+
+            // Dining Options
+            document.getElementById('diningOptions').innerHTML = CONFIG.DINING_OPTIONS.map(opt => `
+                <div class="option-card" data-dining="${opt.id}">
+                    <div class="option-icon">${opt.icon}</div>
+                    <h3>${opt.label}</h3>
+                    <p>${opt.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function setupEventListeners() {
+            startDate.addEventListener('change', updateDateRange);
+            endDate.addEventListener('change', updateDateRange);
+
+            // Regular option cards (single select)
+            document.querySelectorAll('.option-card:not(.multi-select)').forEach(card => {
+                card.addEventListener('click', handleOptionSelection);
+            });
+            
+            // Multi-select option cards
+            document.querySelectorAll('.option-card.multi-select').forEach(card => {
+                card.addEventListener('click', handleMultiSelect);
+            });
+            
+            // Budget slider with formatter
+            const budgetSlider = document.getElementById('budgetSlider');
+            const budgetFormatter = new Intl.NumberFormat('en-US');
+            
+            budgetSlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                preferences.budget = value;
+                document.getElementById('budgetValue').textContent = budgetFormatter.format(value) + ' BHD';
+            });
+            
+            // Checkboxes for limitations
+            document.querySelectorAll('[name="limitations"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handleLimitations);
+            });
+            
+            // Reveal buttons
+            const revealNow = document.getElementById('revealNow');
+            const keepSurprise = document.getElementById('keepSurprise');
+            if (revealNow) revealNow.addEventListener('click', () => alert('Surprise destination will be revealed!'));
+            if (keepSurprise) keepSurprise.addEventListener('click', () => alert('You chose to keep the mystery!'));
+
+            document.getElementById('btnNext').addEventListener('click', nextStep);
+            document.getElementById('btnBack').addEventListener('click', prevStep);
+        }
+
+        function updateDateRange() {
+            // Ensure end date is not before start date
+            if (startDate.value) {
+                const start = new Date(startDate.value);
+                endDate.min = startDate.value;
+                
+                // If end date is set but invalid, clear it
+                if (endDate.value && new Date(endDate.value) < start) {
+                    endDate.value = '';
+                }
+            }
+            
+            // Calculate and display duration if both dates are set
+            if (startDate.value && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                const diffTime = end - start;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Check if duration is valid (max 365 days)
+                if (diffDays > 365) {
+                    endDate.value = '';
+                    durationError.style.display = 'block';
+                    durationDisplay.textContent = 'Trip duration cannot exceed 365 days';
+                    durationDisplay.style.color = 'var(--error)';
+                } else {
+                    durationError.style.display = 'none';
+                    durationDisplay.style.color = '';
+                    preferences.duration = diffDays;
+                    preferences.dates.start = startDate.value;
+                    preferences.dates.end = endDate.value;
+                    
+                    // Format the duration display
+                    if (diffDays === 1) {
+                        durationDisplay.textContent = `Trip Duration: ${diffDays} day`;
+                    } else {
+                        const weeks = Math.floor(diffDays / 7);
+                        const remainingDays = diffDays % 7;
+                        
+                        if (weeks === 0) {
+                            durationDisplay.textContent = `Trip Duration: ${diffDays} days`;
+                        } else if (remainingDays === 0) {
+                            durationDisplay.textContent = `Trip Duration: ${weeks} ${weeks === 1 ? 'week' : 'weeks'} (${diffDays} days)`;
+                        } else {
+                            durationDisplay.textContent = `Trip Duration: ${weeks} ${weeks === 1 ? 'week' : 'weeks'} and ${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} (${diffDays} days total)`;
+                        }
+                    }
+                }
+            } else {
+                durationDisplay.textContent = 'Select both dates to see trip duration';
+                durationError.style.display = 'none';
+            }
+        }
+
+        function handleOptionSelection() {
+            const parent = this.parentElement;
+            parent.querySelectorAll('.active').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+
+            const dataset = this.dataset;
+            if (dataset.region) preferences.region = dataset.region;
+if (dataset.travelers) preferences.travelers = dataset.travelers;
+            if (dataset.dining) preferences.dining = dataset.dining;
+        }
+        
+        function handleMultiSelect(event) {
+            const card = event.target.closest('.option-card');
+            card.classList.toggle('active');
+            
+            // Update preferences
+            const type = card.dataset.type;
+            if (!preferences.travelStyles.includes(type)) {
+                preferences.travelStyles.push(type);
+            } else {
+                preferences.travelStyles = preferences.travelStyles.filter(t => t !== type);
+            }
+        }
+        
+        function handleLimitations() {
+            const checkboxes = document.querySelectorAll('[name="limitations"]:checked');
+            preferences.limitations = Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    steps[currentStep - 1].classList.remove('active');
+                    currentStep++;
+                    steps[currentStep - 1].classList.add('active');
+                    updateProgress();
+                    
+                    if (currentStep === 8) {
+                        showConfirmation();
+                    } else if (currentStep === totalSteps) {
+                        showSummary();
+                    }
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                steps[currentStep - 1].classList.remove('active');
+                currentStep--;
+                steps[currentStep - 1].classList.add('active');
+                updateProgress();
+            }
+        }
+
+        function validateCurrentStep() {
+            // Validate step 1 (dates)
+            if (currentStep === 1) {
+                if (!startDate.value || !endDate.value) {
+                    alert('Please select both start and end dates');
+                    return false;
+                }
+                if (new Date(endDate.value) < new Date(startDate.value)) {
+                    alert('End date cannot be before start date');
+                    return false;
+                }
+                if (preferences.duration > 365) {
+                    alert('Maximum trip duration is 365 days');
+                    return false;
+                }
+            }
+            
+            // Validate step 2 (region)
+            if (currentStep === 2 && !preferences.region) {
+                alert('Please select a destination region');
+                return false;
+            }
+            
+            // Validate step 3 (travel styles)
+            if (currentStep === 3 && preferences.travelStyles.length === 0) {
+                alert('Please select at least one travel style');
+                return false;
+            }
+            
+            // Validate step 4 (travelers)
+            if (currentStep === 4 && !preferences.travelers) {
+                alert('Please select who is joining the trip');
+                return false;
+            }
+            
+            // Validate step 5 (dining)
+            if (currentStep === 5 && !preferences.dining) {
+                alert('Please select a dining preference');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            
+            // Update button text on last step
+            if (currentStep === totalSteps) {
+                document.getElementById('btnNext').innerHTML = `
+                    <i data-lucide="check-circle"></i>
+                    Confirm & Book
+                `;
+                lucide.createIcons();
+            } else {
+                document.getElementById('btnNext').innerHTML = `
+                    Continue
+                    <i data-lucide="chevron-right"></i>
+                `;
+                lucide.createIcons();
+            }
+        }
+        
+        function showConfirmation() {
+            const revealDate = document.getElementById('revealDate');
+            if (startDate.value) {
+                const startDateObj = new Date(startDate.value);
+                const revealDateObj = new Date(startDateObj);
+                revealDateObj.setDate(revealDateObj.getDate() - 3);
+                
+                revealDate.textContent = revealDateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                });
+            } else {
+                revealDate.textContent = "your departure date";
+            }
+        }
+
+        function showSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            const dateFormatter = new Intl.DateTimeFormat('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const budgetFormatter = new Intl.NumberFormat('en-US');
+            
+            // Get travel styles as string
+            let travelStylesText = 'Not selected';
+            if (preferences.travelStyles.length > 0) {
+                travelStylesText = preferences.travelStyles
+                    .map(style => CONFIG.TRAVEL_TYPES.find(t => t.id === style)?.label || style)
+                    .join(', ');
+            }
+            
+            // Get limitations as string
+            let limitationsText = 'None';
+            if (preferences.limitations.length > 0) {
+                limitationsText = preferences.limitations
+                    .map(limitation => {
+                        switch(limitation) {
+                            case 'no-flights': return 'No flights';
+                            case 'wheelchair': return 'Wheelchair accessible';
+                            case 'vegan': return 'Vegan-friendly';
+                            case 'english': return 'English-speaking guides';
+                            default: return limitation;
+                        }
+                    })
+                    .join(', ');
+            }
+            
+            summaryContent.innerHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <div class="summary-item">
+                        <span class="emoji">📅</span>
+                        <div class="summary-detail">
+                            <h3>Travel Dates</h3>
+                            <p>${dateFormatter.format(new Date(preferences.dates.start))} to ${dateFormatter.format(new Date(preferences.dates.end))}</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">⏳</span>
+                        <div class="summary-detail">
+                            <h3>Duration</h3>
+                            <p>${preferences.duration} days</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">🌍</span>
+                        <div class="summary-detail">
+                            <h3>Region</h3>
+                            <p>${CONFIG.REGIONS[preferences.region]?.label || 'Not selected'}</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">🎒</span>
+                        <div class="summary-detail">
+                            <h3>Travel Styles</h3>
+                            <p>${travelStylesText}</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">👥</span>
+                        <div class="summary-detail">
+                            <h3>Travelers</h3>
+                            <p>${CONFIG.TRAVELER_TYPES.find(t => t.id === preferences.travelers)?.label || 'Not selected'}</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">🍽️</span>
+                        <div class="summary-detail">
+                            <h3>Dining</h3>
+                            <p>${CONFIG.DINING_OPTIONS.find(d => d.id === preferences.dining)?.label || 'Not selected'}</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">💰</span>
+                        <div class="summary-detail">
+                            <h3>Budget</h3>
+                            <p>${budgetFormatter.format(preferences.budget)} BHD</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="emoji">⚠️</span>
+                        <div class="summary-detail">
+                            <h3>Special Requirements</h3>
+                            <p>${limitationsText}</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="margin: 0 auto; display: block; padding: 1rem 2rem; font-size: 1.125rem;">
+                    <i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem;"></i>
+                    Confirm & Create Trip Plan
+                </button>
+            `;
+            lucide.createIcons();
+        }
+
+ async function generateAIPlan() {
+            const aiResponse = document.getElementById('aiResponse');
+            aiResponse.innerHTML = `
+                <div class="loading">
+                    <i data-lucide="loader" style="animation: spin 1s linear infinite"></i>
+                    Generating your smart travel plan...
+                </div>
+            `;
+            lucide.createIcons();
+
+            try {
+                const prompt = `Create a detailed travel plan for Bahraini citizen with:
+                    Destination: ${preferences.region}
+                    Dates: ${preferences.dates.start} to ${preferences.dates.end}
+                    Budget: ${preferences.budget} BHD
+                    Travel style: ${preferences.travelStyles.join(', ')}
+                    Travelers: ${preferences.travelers}
+                    Dining: ${preferences.dining}
+                    Special requirements: ${preferences.limitations.join(', ')}
+                    
+                    Include in Arabic and English:
+                    1. Visa requirements
+                    2. Flight options from Bahrain
+                    3. Hotel and staying recommendations
+                    4. Cultural tips
+                    5. Budget breakdown
+                    6. Emergency contacts
+                    7. where they can buy tickets based on date
+
+                    
+                    Format with clear headings and bullet points.`;
+
+                const response = await fetch('http://localhost:3001/generate-plan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+                aiResponse.innerHTML = formatPlan(data.choices[0].message.content);
+                
+            } catch (error) {
+                aiResponse.innerHTML = `
+                    <div style="color: var(--error)">
+                        <i data-lucide="alert-triangle"></i>
+                        Error generating plan: ${error.message}
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function formatPlan(text) {
+            return text
+                .replace(/#{3}/g, '</h3>')
+                .replace(/#{2}/g, '</h2>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Modify nextStep function
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    steps[currentStep - 1].classList.remove('active');
+                    currentStep++;
+                    steps[currentStep - 1].classList.add('active');
+                    updateProgress();
+                    
+                    if (currentStep === 8) {
+                        showConfirmation();
+                    } else if (currentStep === totalSteps) {
+                        showSummary();
+                        generateAIPlan();  
+                    }
+                }
+            }
+        }
+
+        // Change totalSteps to 10
+        const totalSteps = 10;
+
+
+        init();
+    </script>
+</body>
+</html>
